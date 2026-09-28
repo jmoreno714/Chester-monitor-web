@@ -290,7 +290,7 @@
     <div id="comp-cards" class="comps"></div>
   </section>
 
-  <footer>Los precios de Chester salen del inventario cargado en el monitor. Una oferta marcada como "otro tamaño" o "precio por kg" se muestra pero no cuenta para la comparación.</footer>
+  <footer>Los precios de Chester salen del inventario cargado en el monitor. Una oferta marcada como "otro tamaño", "tamaño no indicado" o "precio por kg" se muestra pero no cuenta para la comparación.</footer>
 </div>
 
 <script>
@@ -375,9 +375,13 @@
   function resetButton() { $("unlock").disabled = false; $("unlock").textContent = "Entrar"; }
 
   // ─── Analisis de precios ──────────────────────────────────────────────────
+  // Solo se comparan precios del mismo tamaño. Si uno de los dos nombres no
+  // dice el peso (ej. El Kadi publica "Complete - Gato - Adulto" con el
+  // precio del tamaño más chico), no se sabe qué tamaño es y no se compara.
   function sameSize(offer, product) {
     if (offer.bulk) return false;
-    if (offer.kg == null || product.kg == null) return true;
+    if (offer.kg == null && product.kg == null) return true;
+    if (offer.kg == null || product.kg == null) return false;
     return Math.abs(offer.kg - product.kg) <= 0.01 * Math.max(offer.kg, product.kg);
   }
   function analyze(p, comp) {
@@ -492,6 +496,8 @@
     return '<ul class="offers">' + a.offers.map((o) => {
       const flags = [];
       if (o.bulk) flags.push('<span class="pill warn">precio por kg</span>');
+      else if (!sameSize(o, p) && o.kg == null) flags.push('<span class="pill warn">tamaño no indicado</span>');
+      else if (!sameSize(o, p) && p.kg == null) flags.push(`<span class="pill warn">${fmtKg(o.kg)}, Chester no indica tamaño</span>`);
       else if (!sameSize(o, p)) flags.push(`<span class="pill warn">otro tamaño: ${fmtKg(o.kg)}</span>`);
       const age = daysAgo(o.u);
       if (age > STALE_OFFER_DAYS) flags.push(`<span class="pill warn">precio de hace ${Math.floor(age)} días</span>`);
