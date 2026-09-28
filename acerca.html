@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<style>body { margin: 0; } img { max-width: 100%; }</style>
+<title>Chester Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+  :root {
+    --ground: #eef2ee;
+    --surface: #ffffff;
+    --ink: #15201b;
+    --muted: #56655d;
+    --line: #d3dbd4;
+    --accent: #1d5c45;
+    --accent-soft: #dcebe3;
+    --tag: #f4cb3f;
+    --tag-ink: #2b2305;
+    --up: #b8392c;
+    --down: #1c7f47;
+    --shadow: 0 1px 2px rgba(21, 32, 27, .06), 0 8px 24px rgba(21, 32, 27, .06);
+    --display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    --body: "Source Sans 3", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --mono: "IBM Plex Mono", "Cascadia Mono", Consolas, "Courier New", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #0f1512;
+      --surface: #17201b;
+      --ink: #e4ece7;
+      --muted: #9aaaa1;
+      --line: #2b3831;
+      --accent: #7cc9a4;
+      --accent-soft: #1d2f26;
+      --tag: #e3bb35;
+      --tag-ink: #1f1903;
+      --up: #ef8174;
+      --down: #6fd197;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #0f1512;
+    --surface: #17201b;
+    --ink: #e4ece7;
+    --muted: #9aaaa1;
+    --line: #2b3831;
+    --accent: #7cc9a4;
+    --accent-soft: #1d2f26;
+    --tag: #e3bb35;
+    --tag-ink: #1f1903;
+    --up: #ef8174;
+    --down: #6fd197;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.55;
+    padding-inline: 20px;
+    padding-block: 0 64px;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 72px; }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: clamp(1.6rem, 3.2vw, 2.1rem); font-weight: 800; font-stretch: 112%; line-height: 1.1; }
+  h3 { font-size: 1.1rem; font-weight: 700; font-stretch: 105%; }
+  p { margin: 0; max-width: 65ch; }
+  .eyebrow {
+    font-family: var(--mono); font-size: .76rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .section { display: flex; flex-direction: column; gap: 22px; }
+  .section-head { display: flex; flex-direction: column; gap: 10px; }
+  .lede { color: var(--muted); }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* Encabezado */
+  .top {
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+    padding-block: 22px; border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; font-stretch: 115%; font-size: 1.05rem; }
+  .brand-mark {
+    width: 28px; height: 28px; border-radius: 6px; background: var(--tag); color: var(--tag-ink);
+    display: grid; place-items: center; font-size: .95rem; font-weight: 900;
+  }
+  .status { display: flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--muted); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--down); box-shadow: 0 0 0 3px color-mix(in srgb, var(--down) 25%, transparent); }
+
+  /* Hero */
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 48px; align-items: center; padding-top: 12px; }
+  .hero h1 { font-size: clamp(2.6rem, 6.4vw, 4.6rem); font-weight: 900; font-stretch: 118%; line-height: .95; letter-spacing: -0.02em; }
+  .hero h1 span { color: var(--accent); }
+  .hero-copy { display: flex; flex-direction: column; gap: 20px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: .95rem; color: var(--muted); }
+  .facts b { color: var(--ink); font-weight: 700; }
+
+  .ticket { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
+  .ticket-head {
+    display: flex; justify-content: space-between; gap: 12px; padding: 12px 18px;
+    background: var(--tag); color: var(--tag-ink); font-family: var(--mono); font-size: .75rem;
+    letter-spacing: .1em; text-transform: uppercase; font-weight: 500;
+  }
+  .match { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; padding: 16px 18px; border-top: 1px dashed var(--line); }
+  .match:first-of-type { border-top: 0; }
+  .raw { grid-column: 1 / -1; font-family: var(--mono); font-size: .82rem; color: var(--muted); overflow-wrap: anywhere; }
+  .raw small { font-family: var(--body); font-size: .78rem; letter-spacing: .02em; }
+  .to { font-family: var(--display); font-stretch: 105%; font-weight: 700; font-size: 1.02rem; display: flex; gap: 8px; align-items: baseline; }
+  .to::before { content: "→"; color: var(--accent); font-weight: 400; }
+  .to.no { color: var(--muted); font-weight: 600; }
+  .to.no::before { content: "×"; color: var(--up); }
+  .score {
+    align-self: center; font-family: var(--mono); font-size: .8rem; padding: 3px 8px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .score.no { background: color-mix(in srgb, var(--up) 14%, transparent); color: var(--up); }
+
+  /* Pasos */
+  .steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; list-style: none; margin: 0; padding: 0; counter-reset: paso; }
+  .steps li { display: flex; flex-direction: column; gap: 8px; padding-top: 16px; border-top: 3px solid var(--ink); counter-increment: paso; }
+  .steps li::before { content: "Paso " counter(paso); font-family: var(--mono); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+  .steps p { font-size: .96rem; color: var(--muted); }
+
+  /* Tablas */
+  .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: .95rem; min-width: 640px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+  th { font-family: var(--mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
+  td .sub { display: block; color: var(--muted); font-size: .85rem; }
+  tfoot td { font-weight: 700; border-top: 1px solid var(--line); border-bottom: 0; }
+  .platform { font-family: var(--mono); font-size: .8rem; }
+
+  /* Reglas del matching */
+  .rules { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .rule { background: var(--surface); padding: 18px; display: flex; flex-direction: column; gap: 8px; }
+  .rule p { font-size: .94rem; color: var(--muted); }
+  .rule code { font-family: var(--mono); font-size: .8rem; color: var(--ink); }
+  .pen { font-family: var(--mono); font-size: .75rem; color: var(--up); }
+  .pen.soft { color: var(--muted); }
+
+  /* Mail de ejemplo */
+  .two { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+  .mail { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
+  .mail-meta { padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; font-size: .9rem; }
+  .mail-meta .subj { font-weight: 700; }
+  .mail-meta .ex { font-family: var(--mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .mail-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .mail-row:last-child { border-bottom: 0; }
+  .mail-row .comp { grid-column: 1 / -1; font-family: var(--mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .mail-row .prod { font-weight: 600; }
+  .mail-row .prod small { display: block; font-weight: 400; color: var(--muted); }
+  .delta { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .delta .p { display: block; color: var(--muted); font-size: .88rem; }
+  .delta .v { font-weight: 700; }
+  .delta .v.up { color: var(--up); }
+  .delta .v.down { color: var(--down); }
+  .notes { display: flex; flex-direction: column; gap: 18px; }
+  .note h3 { margin-bottom: 4px; }
+  .note p { font-size: .96rem; color: var(--muted); }
+
+  /* Confiabilidad */
+  .checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 32px; list-style: none; padding: 0; margin: 0; }
+  .checks li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; }
+  .checks li::before { content: "✓"; color: var(--accent); font-weight: 700; }
+  .checks b { display: block; }
+  .checks span { color: var(--muted); font-size: .95rem; }
+
+  /* Historial */
+  .timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .timeline li { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 20px; padding-block: 18px; border-top: 1px solid var(--line); }
+  .timeline time { font-family: var(--mono); font-size: .85rem; color: var(--accent); font-variant-numeric: tabular-nums; padding-top: 2px; }
+  .timeline ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: .96rem; }
+
+  /* Pendiente */
+  .pending { display: flex; flex-direction: column; gap: 8px; padding: 20px 22px; border-radius: 10px; background: var(--tag); color: var(--tag-ink); }
+  .pending .eyebrow { color: var(--tag-ink); opacity: .8; }
+  .pending h3 { font-size: 1.25rem; }
+  .pending code { font-family: var(--mono); font-size: .9em; }
+
+  .files { display: flex; flex-wrap: wrap; gap: 8px; }
+  .file { font-family: var(--mono); font-size: .82rem; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+  .file span { color: var(--muted); font-family: var(--body); }
+  footer { border-top: 1px solid var(--line); padding-top: 20px; color: var(--muted); font-size: .9rem; display: flex; flex-direction: column; gap: 14px; }
+
+  @media (max-width: 860px) {
+    .hero, .two { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+    .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .rules { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 560px) {
+    body { font-size: 16px; padding-inline: 16px; }
+    .wrap { gap: 56px; }
+    .steps, .rules, .checks { grid-template-columns: minmax(0, 1fr); }
+    .timeline li { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .ticket .match { animation: rise .5s ease both; }
+    .ticket .match:nth-of-type(2) { animation-delay: .08s; }
+    .ticket .match:nth-of-type(3) { animation-delay: .16s; }
+    .ticket .match:nth-of-type(4) { animation-delay: .24s; }
+    @keyframes rise { from { transform: translateY(6px); opacity: .4; } to { transform: none; opacity: 1; } }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">$</span>Chester Monitor</div>
+    <a class="status" href="index.html">Ir al tablero de precios →</a>
+  </header>
+
+  <section class="hero" aria-labelledby="titulo">
+    <div class="hero-copy">
+      <p class="eyebrow">Chester Pet Shop · Monitor de precios</p>
+      <h1 id="titulo">Los precios de la competencia, <span>vigilados</span></h1>
+      <p class="lede">Cada 4 horas el monitor lee los precios de 5 pet shops, reconoce cuáles de esos productos vende Chester y manda un mail cuando alguno cambia de precio.</p>
+      <div class="facts">
+        <span><b class="num">5</b> competidores</span>
+        <span><b class="num">2.644</b> productos leídos</span>
+        <span><b class="num">604</b> coinciden con Chester</span>
+        <span><b class="num">332</b> productos en el catálogo</span>
+      </div>
+    </div>
+
+    <div class="ticket" role="figure" aria-label="Ejemplos reales de cómo el monitor reconoce productos">
+      <div class="ticket-head"><span>Nombre del competidor</span><span>Producto de Chester</span></div>
+      <div class="match">
+        <div class="raw">BALANCED PERRO AD PEQ X3KG <small>· Veterinaria Casa Campo</small></div>
+        <div class="to">Balanced Perro Adulto Raza Pequeña x 3kg</div>
+        <span class="score">0,98</span>
+      </div>
+      <div class="match">
+        <div class="raw">ROYAL CANIN GASTRO INTESTINAL DOG X 10KG. (01272) <small>· Cerro Mascotas</small></div>
+        <div class="to">Royal Canin Gastrointestinal Perro 10kg</div>
+        <span class="score">1,00</span>
+      </div>
+      <div class="match">
+        <div class="raw">Old Prince Cord y Arroz RM/G · 15 kg <small>· La Mascotera</small></div>
+        <div class="to">Old Prince Novel Perro Adulto Raza Mediana y Grande Cordero 15kg</div>
+        <span class="score">0,67</span>
+      </div>
+      <div class="match">
+        <div class="raw">ROYAL CANIN RENAL CANINE X 10KG. (01351) <small>· Cerro Mascotas</small></div>
+        <div class="to no">Sin match: Chester no vende esta dieta de Royal Canin</div>
+        <span class="score no">descartado</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="como">
+    <div class="section-head">
+      <p class="eyebrow">Cómo funciona</p>
+      <h2 id="como">Una revisión completa en unos 4 minutos</h2>
+    </div>
+    <ol class="steps">
+      <li><h3>Lee los precios</h3><p>Entra a las secciones de alimentos, salud e higiene de cada competidor y anota nombre y precio de cada producto.</p></li>
+      <li><h3>Reconoce el producto</h3><p>Busca cada nombre en el catálogo de Chester. Si no está claro que sea el mismo producto, lo deja afuera.</p></li>
+      <li><h3>Compara</h3><p>Pone el precio de hoy al lado del de la revisión anterior. Los cambios de centavos no cuentan.</p></li>
+      <li><h3>Avisa</h3><p>Si hubo cambios, manda un solo mail con todos, agrupados por competidor.</p></li>
+    </ol>
+  </section>
+
+  <section class="section" aria-labelledby="competidores">
+    <div class="section-head">
+      <p class="eyebrow">Competidores</p>
+      <h2 id="competidores">Cinco tiendas, cinco formas de leerlas</h2>
+      <p class="lede">Cada sitio está hecho con una plataforma distinta, así que cada uno tiene su propio lector. Cifras de la revisión del 28/09/2026.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Competidor</th><th>Qué se revisa</th><th>Plataforma</th><th class="r">Productos leídos</th><th class="r">Coinciden con Chester</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><a href="https://pedix.app/bravopet/categoria/QiQdf3t20E7AwpTJCESW" target="_blank" rel="noopener">Bravo Pet</a></td><td>Toda la tienda</td><td class="platform">Pedix</td><td class="r">278</td><td class="r">179</td></tr>
+          <tr><td><a href="https://www.cerromascotas.com/perros/" target="_blank" rel="noopener">Cerro Mascotas</a></td><td>Perros y gatos, con salud e higiene</td><td class="platform">Tienda Nube</td><td class="r">762</td><td class="r">182</td></tr>
+          <tr><td><a href="https://petshop.el-kadi.com.ar/accesorio/perros/" target="_blank" rel="noopener">El Kadi</a></td><td>Alimentos, farmacia e higiene</td><td class="platform">Tienda Nube</td><td class="r">212</td><td class="r">39</td></tr>
+          <tr><td><a href="https://lamascotera.com.ar/ar/categories/perros" target="_blank" rel="noopener">La Mascotera</a><span class="sub">Sumado el 23/09</span></td><td>Perros, gatos y salud e higiene</td><td class="platform">Next.js</td><td class="r">557</td><td class="r">23</td></tr>
+          <tr><td><a href="https://tienda.veterinariacasacampo.com.ar/" target="_blank" rel="noopener">Veterinaria Casa Campo</a><span class="sub">Sumado el 23/09</span></td><td>Toda la tienda</td><td class="platform">milocal.app</td><td class="r">835</td><td class="r">181</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td>Total</td><td></td><td></td><td class="r">2.644</td><td class="r">604</td></tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="matching">
+    <div class="section-head">
+      <p class="eyebrow">Reconocer el producto</p>
+      <h2 id="matching">Cómo decide si es el mismo producto</h2>
+      <p class="lede">Cada competidor escribe los nombres a su manera: en mayúsculas, en inglés, abreviados o con códigos. Primero se ordena el nombre: sin acentos ni plurales, con las abreviaturas escritas completas y el peso en un formato fijo. Después se compara contra los 332 productos del inventario de Chester. Las palabras que identifican al producto, como "urinary" o "caniche", pesan más que las que se repiten en todo el catálogo, como "royal" o "perro". Se acepta la coincidencia solo si el puntaje llega a 0,60.</p>
+    </div>
+    <div class="rules">
+      <div class="rule"><h3>Marca y línea</h3><p>Balanced y Complete son líneas distintas de Vitalcan. Whiskas o Pro Plan nunca matchean porque Chester no las vende.</p><span class="pen">Distintas: puntaje a la mitad</span></div>
+      <div class="rule"><h3>Especie</h3><p>Un alimento para gato nunca se compara con uno para perro. Entiende <code>cat</code>, <code>feline</code>, <code>Vital Can</code> y <code>Vital Cat</code>.</p><span class="pen">Distintas: puntaje a la mitad</span></div>
+      <div class="rule"><h3>Etapa de vida</h3><p>Cachorro, adulto, senior y kitten. Reconoce <code>puppy</code>, <code>junior</code>, <code>CACH</code> y <code>AD</code>.</p><span class="pen">Distintas: puntaje a la mitad</span></div>
+      <div class="rule"><h3>Tamaño de raza</h3><p>Pequeña, mediana, grande y gigante, incluidas las líneas Mini y Maxi de Royal Canin y las abreviaturas <code>RP</code>, <code>PEQ</code> o <code>GDE</code>.</p><span class="pen">Distintas: puntaje a la mitad</span></div>
+      <div class="rule"><h3>Húmedo o seco</h3><p>Latas, pouches y salsas no se comparan con bolsas de alimento seco.</p><span class="pen">Distintas: puntaje a la mitad</span></div>
+      <div class="rule"><h3>Dieta especial</h3><p>Un alimento común no se compara con una dieta urinaria, renal o gastrointestinal, aunque sea de la misma marca.</p><span class="pen">Distintas: puntaje a la mitad</span></div>
+      <div class="rule"><h3>Formato</h3><p>Un pouch, una lata o una bolsita de menos de 1 kg no se compara con una bolsa.</p><span class="pen">Distintos: puntaje a la mitad</span></div>
+      <div class="rule"><h3>Peso de la bolsa</h3><p>Si Chester tiene el mismo producto en varios tamaños, gana el del mismo peso. Si tiene uno solo, se compara igual.</p><span class="pen soft">Desempate: puntaje × 0,85</span></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="alertas">
+    <div class="section-head">
+      <p class="eyebrow">Alertas</p>
+      <h2 id="alertas">Un mail solo cuando hay algo para ver</h2>
+    </div>
+    <div class="two">
+      <div class="mail" role="figure" aria-label="Ejemplo del formato del mail de alerta">
+        <div class="mail-meta">
+          <span class="ex">Ejemplo del formato, con precios inventados</span>
+          <span class="subj">[Chester] 3 cambio(s) de precio</span>
+        </div>
+        <div class="mail-row">
+          <span class="comp">La Mascotera</span>
+          <span class="prod">Agility Perro Control de Peso · 15 kg<small>Chester: Agility Perro Control de Peso x 15kg</small></span>
+          <span class="delta"><span class="p">$79.900 → $83.900</span><span class="v up">▲ 5,0%</span></span>
+        </div>
+        <div class="mail-row">
+          <span class="comp">Bravo Pet</span>
+          <span class="prod">Complete Perro Adulto Raza Pequeña x 3 kg<small>Chester: Complete Perro Adulto Raza Pequeña</small></span>
+          <span class="delta"><span class="p">$19.000 → $19.900</span><span class="v up">▲ 4,7%</span></span>
+        </div>
+        <div class="mail-row">
+          <span class="comp">Veterinaria Casa Campo</span>
+          <span class="prod">BALANCED GATO AD X7,5KG<small>Chester: Balanced Gato Adulto</small></span>
+          <span class="delta"><span class="p">$52.000 → $49.400</span><span class="v down">▼ 5,0%</span></span>
+        </div>
+      </div>
+      <div class="notes">
+        <div class="note"><h3>Cambio de precio</h3><p>Un mail por revisión con todos los cambios juntos. Cada fila muestra el producto del competidor, el precio anterior y el nuevo, la variación y con qué producto de Chester se comparó.</p></div>
+        <div class="note"><h3>Competidor sin datos</h3><p>Si un sitio no devuelve precios en 3 revisiones seguidas, unas 12 horas, llega un aviso aparte. Suele querer decir que el sitio cambió su diseño y hay que ajustar el lector. Se manda una sola vez por falla.</p></div>
+        <div class="note"><h3>Primera vez</h3><p>Cuando se suma un competidor o un producto nuevo, la primera revisión solo guarda el precio. Los avisos empiezan desde la segunda.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="config">
+    <div class="section-head">
+      <p class="eyebrow">Configuración</p>
+      <h2 id="config">Cómo está ajustado hoy</h2>
+      <p class="lede">Estos valores se cambian en <code class="file">config.json</code>, en la computadora donde corre el monitor. Ese archivo no se sube a GitHub porque tiene la contraseña del mail.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ajuste</th><th>Valor</th><th>Qué hace</th></tr></thead>
+        <tbody>
+          <tr><td>Frecuencia</td><td class="num">Cada 4 horas</td><td>Tarea del Programador de tareas de Windows. Corre también con la laptop a batería y, si estaba apagada, recupera la revisión al encenderse.</td></tr>
+          <tr><td>Umbral de coincidencia</td><td class="num">0,60</td><td>Puntaje mínimo para considerar que dos nombres son el mismo producto. Más alto es más estricto.</td></tr>
+          <tr><td>Cambio mínimo</td><td class="num">$1</td><td>Diferencias menores se ignoran. Evita avisos por redondeos de centavos.</td></tr>
+          <tr><td>Aviso de sitio caído</td><td class="num">3 revisiones</td><td>Revisiones seguidas sin datos antes de mandar el aviso.</td></tr>
+          <tr><td>Limpieza del historial</td><td class="num">30 días</td><td>Borra productos que el competidor dejó de publicar.</td></tr>
+          <tr><td>Reintentos</td><td class="num">3 intentos</td><td>Si una página no responde, espera 3 y 6 segundos y vuelve a probar.</td></tr>
+          <tr><td>Registro de actividad</td><td class="num">5 MB × 4 archivos</td><td>El log rota solo y nunca ocupa más de unos 20 MB.</td></tr>
+          <tr><td>Destinatario</td><td>Casilla de Chester</td><td>A dónde llegan las alertas. El remitente es una cuenta de Gmail con contraseña de aplicación.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="confiable">
+    <div class="section-head">
+      <p class="eyebrow">Confiabilidad</p>
+      <h2 id="confiable">Pensado para correr solo</h2>
+    </div>
+    <ul class="checks">
+      <li><div><b>Un sitio roto no frena a los demás</b><span>Si un competidor cambia su página y su lector falla, los otros cuatro se revisan igual.</span></div></li>
+      <li><div><b>El historial no se corrompe</b><span>Se guarda de una sola vez. Si la laptop se apaga en el medio, queda la versión anterior intacta.</span></div></li>
+      <li><div><b>Precios bien leídos</b><span>Entiende "$83.900", "$105.550,00" y precios sin publicar como "Consultar".</span></div></li>
+      <li><div><b>Probado</b><span>27 pruebas automáticas cubren lectura de precios, reconocimiento de productos, historial, mails y fallas.</span></div></li>
+    </ul>
+  </section>
+
+  <section class="section" aria-labelledby="historial">
+    <div class="section-head">
+      <p class="eyebrow">Historial del proyecto</p>
+      <h2 id="historial">Cómo llegó hasta acá</h2>
+    </div>
+    <ol class="timeline">
+      <li><time datetime="2026-04-09">09/04/2026</time><div><h3>Primera versión</h3><ul><li>Bravo Pet, Cerro Mascotas y El Kadi, revisados cada hora.</li><li>Catálogo fijo de 105 productos de Chester.</li></ul></div></li>
+      <li><time datetime="2026-09-23">23/09/2026</time><div><h3>Dos tiendas nuevas y más confiabilidad</h3><ul><li>Se suman La Mascotera y Veterinaria Casa Campo.</li><li>Se corrige la lectura de precios sin centavos, como "$83.900".</li><li>Se deja de cruzar productos de perro con productos de gato.</li><li>Reintentos ante fallas de red. La tarea pasa a correr cada 4 horas, también a batería.</li></ul></div></li>
+      <li><time datetime="2026-09-28">28/09/2026</time><div><h3>Reconocimiento más preciso</h3><ul><li>Las alertas pasan a la casilla de Chester.</li><li>Nuevo reconocimiento de productos: de 367 a 408 coincidencias, con menos cruces equivocados.</li><li>Aviso por mail si un competidor deja de responder.</li><li>Historial a prueba de cortes y pruebas automáticas.</li><li>Catálogo de Chester desde el inventario: de 105 a 332 productos, con antiparasitarios e higiene.</li><li>Se suman Farmacia y Estética e higiene de El Kadi y Salud, higiene y estética de La Mascotera.</li></ul></div></li>
+    </ol>
+  </section>
+
+  <aside class="pending" aria-labelledby="pendiente">
+    <p class="eyebrow">Mantenimiento</p>
+    <h3 id="pendiente">Cuando cambian los productos de Chester</h3>
+    <p>Exportar el inventario a Excel y correr <code>import_catalog.py</code> con la planilla. Deja afuera envíos, promociones, inactivos y repetidos, y no copia costos ni stock.</p>
+  </aside>
+
+  <footer>
+    <div class="files">
+      <span class="file">monitor.py <span>· el programa</span></span>
+      <span class="file">chester_catalog.json <span>· catálogo de Chester</span></span>
+      <span class="file">price_history.json <span>· últimos precios vistos</span></span>
+      <span class="file">import_catalog.py <span>· importa el inventario</span></span>
+      <span class="file">test_monitor.py <span>· pruebas</span></span>
+      <span class="file">config.json <span>· ajustes, solo local</span></span>
+    </div>
+    <p>Chester Monitor · Chester Pet Shop · Página actualizada el 28/09/2026</p>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Chester Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --ground: #eef2ee;
+    --surface: #ffffff;
+    --surface-2: #f5f8f5;
+    --ink: #15201b;
+    --muted: #56655d;
+    --line: #d3dbd4;
+    --accent: #1d5c45;
+    --accent-soft: #dcebe3;
+    --tag: #f4cb3f;
+    --tag-ink: #2b2305;
+    --up: #b8392c;
+    --up-soft: #f8e3e0;
+    --down: #1c7f47;
+    --down-soft: #dff1e6;
+    --warn: #9a6500;
+    --warn-soft: #fbefd6;
+    --shadow: 0 1px 2px rgba(21, 32, 27, .06), 0 8px 24px rgba(21, 32, 27, .06);
+    --display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    --body: "Source Sans 3", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --mono: "IBM Plex Mono", "Cascadia Mono", Consolas, "Courier New", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --ground: #0f1512;
+      --surface: #17201b;
+      --surface-2: #1c2721;
+      --ink: #e4ece7;
+      --muted: #9aaaa1;
+      --line: #2b3831;
+      --accent: #7cc9a4;
+      --accent-soft: #1d2f26;
+      --tag: #e3bb35;
+      --tag-ink: #1f1903;
+      --up: #ef8174;
+      --up-soft: #3a1f1c;
+      --down: #6fd197;
+      --down-soft: #16301f;
+      --warn: #e6b45a;
+      --warn-soft: #3a2e14;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  body {
+    background: var(--ground); color: var(--ink); font-family: var(--body);
+    font-size: 16px; line-height: 1.5; padding-inline: 20px;
+    padding-block: env(safe-area-inset-top, 0px) calc(48px + env(safe-area-inset-bottom, 0px));
+  }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  button, input, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; }
+  .wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+  .num { font-variant-numeric: tabular-nums; }
+  .eyebrow { font-family: var(--mono); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .muted { color: var(--muted); }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; font-stretch: 115%; font-size: 1.05rem; }
+  .brand-mark { width: 28px; height: 28px; border-radius: 6px; background: var(--tag); color: var(--tag-ink); display: grid; place-items: center; font-weight: 900; }
+  .btn {
+    border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 14px;
+    cursor: pointer; font-weight: 600;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+  .btn.small { padding: 5px 10px; font-size: .9rem; }
+
+  /* Pantalla de contrasena */
+  .lock { min-height: 100dvh; display: grid; place-items: center; padding-block: 40px; }
+  .lock-card {
+    width: min(420px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .lock-head { background: var(--tag); color: var(--tag-ink); padding: 18px 22px; display: flex; flex-direction: column; gap: 4px; }
+  .lock-head .eyebrow { color: var(--tag-ink); opacity: .75; }
+  .lock-head h1 { font-size: 1.6rem; font-weight: 900; font-stretch: 115%; }
+  .lock-body { padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-weight: 600; font-size: .95rem; }
+  .field input[type=password], .field input[type=text] {
+    border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--surface-2); width: 100%;
+  }
+  .check { display: flex; gap: 8px; align-items: center; font-size: .95rem; color: var(--muted); }
+  .error { color: var(--up); font-size: .95rem; }
+  .lock-foot { font-size: .88rem; color: var(--muted); }
+
+  /* Encabezado */
+  .top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding-block: 18px; border-bottom: 1px solid var(--line); }
+  .top-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .status { display: flex; align-items: center; gap: 8px; font-size: .92rem; color: var(--muted); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--down); flex: none; }
+  .dot.stale { background: var(--warn); }
+  .banner { border-radius: 10px; padding: 12px 16px; background: var(--warn-soft); color: var(--warn); font-weight: 600; }
+
+  /* Resumen */
+  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .tile {
+    text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 2px; cursor: pointer;
+  }
+  .tile:hover { border-color: var(--accent); }
+  .tile b { font-family: var(--display); font-size: 2rem; font-weight: 800; font-stretch: 110%; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .tile.up b { color: var(--up); }
+  .tile.down b { color: var(--down); }
+  .tile span { color: var(--muted); font-size: .92rem; }
+
+  /* Pestanas */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .tab {
+    border: 0; background: none; padding: 10px 14px; cursor: pointer; font-weight: 600; color: var(--muted);
+    border-bottom: 3px solid transparent; margin-bottom: -1px;
+  }
+  .tab[aria-selected=true] { color: var(--ink); border-bottom-color: var(--accent); }
+  .tabs a { margin-left: auto; align-self: center; font-size: .92rem; }
+
+  /* Filtros */
+  .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+  .filters .field { min-width: 0; flex: 1 1 170px; }
+  .filters .field.grow { flex: 3 1 240px; }
+  .filters select, .filters input[type=search] {
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--surface); width: 100%;
+  }
+  .count { font-size: .92rem; color: var(--muted); }
+
+  /* Tablas */
+  .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: var(--mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 500; white-space: nowrap; background: var(--surface); }
+  td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: 0; }
+  .prices { min-width: 760px; }
+  .prod-row { cursor: pointer; }
+  .prod-row:hover td { background: var(--surface-2); }
+  .prod-row td:first-child::before { content: "▸"; display: inline-block; width: 16px; color: var(--muted); transition: transform .15s; }
+  .prod-row.open td:first-child::before { transform: rotate(90deg); }
+  .pname { font-weight: 600; }
+  .sub { display: block; color: var(--muted); font-size: .85rem; font-weight: 400; }
+  .pill { display: inline-block; font-family: var(--mono); font-size: .78rem; padding: 2px 8px; border-radius: 999px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pill.up { background: var(--up-soft); color: var(--up); }
+  .pill.down { background: var(--down-soft); color: var(--down); }
+  .pill.flat { background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .detail td { background: var(--surface-2); padding: 0; }
+  .offers { list-style: none; margin: 0; padding: 6px 14px 10px 30px; display: flex; flex-direction: column; }
+  .offer { display: grid; grid-template-columns: minmax(140px, 1fr) minmax(0, 2.4fr) auto auto; gap: 4px 16px; padding-block: 8px; border-bottom: 1px dashed var(--line); align-items: baseline; }
+  .offer:last-child { border-bottom: 0; }
+  .offer .comp { font-weight: 600; }
+  .offer .oname { font-family: var(--mono); font-size: .8rem; color: var(--muted); overflow-wrap: anywhere; }
+  .flags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 3px; }
+  .empty { padding: 28px; text-align: center; color: var(--muted); }
+
+  /* Cambios */
+  .changes { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  .change { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 4px 16px; padding: 12px 16px; border-bottom: 1px solid var(--line); align-items: baseline; }
+  .change:last-child { border-bottom: 0; }
+  .change time { font-family: var(--mono); font-size: .8rem; color: var(--muted); }
+  .change .what { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .change .price { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* Competidores */
+  .comps { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+  .comp-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .comp-card h3 { font-size: 1.05rem; font-stretch: 105%; }
+  .kv { display: grid; grid-template-columns: auto auto; justify-content: space-between; gap: 4px 12px; font-size: .92rem; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  footer { color: var(--muted); font-size: .88rem; border-top: 1px solid var(--line); padding-top: 16px; }
+
+  @media (max-width: 760px) {
+    body { padding-inline: 16px; }
+    .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .offer { grid-template-columns: minmax(0, 1fr) auto; }
+    .offer .oname { grid-column: 1 / -1; grid-row: 2; }
+    .change { grid-template-columns: minmax(0, 1fr) auto; }
+    .change time { grid-column: 1 / -1; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div id="lock" class="lock">
+  <form id="login" class="lock-card" autocomplete="on">
+    <div class="lock-head">
+      <span class="eyebrow">Chester Pet Shop</span>
+      <h1>Chester Monitor</h1>
+    </div>
+    <div class="lock-body">
+      <p class="muted" style="margin:0">Precios de la competencia comparados con los de Chester. Se actualiza cada 4 horas.</p>
+      <div class="field">
+        <label for="pw">Contraseña</label>
+        <input id="pw" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <label class="check" for="remember"><input id="remember" type="checkbox"> Recordar en este dispositivo</label>
+      <p id="lock-error" class="error" hidden></p>
+      <button id="unlock" class="btn primary" type="submit">Entrar</button>
+      <p class="lock-foot" style="margin:0"><a href="acerca.html">Cómo funciona el monitor</a></p>
+    </div>
+  </form>
+</div>
+
+<div id="app" class="wrap" hidden>
+  <header class="top">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">$</span>Chester Monitor</div>
+    <div class="top-right">
+      <div class="status"><span id="dot" class="dot" aria-hidden="true"></span><span id="updated"></span></div>
+      <button id="reload" class="btn small" type="button">Actualizar</button>
+      <button id="logout" class="btn small" type="button">Salir</button>
+    </div>
+  </header>
+
+  <p id="stale" class="banner" hidden></p>
+
+  <section class="tiles" aria-label="Resumen">
+    <button class="tile" type="button" data-view="compared"><b id="t-compared" class="num">0</b><span>productos con precio para comparar</span></button>
+    <button class="tile up" type="button" data-view="pricier"><b id="t-pricier" class="num">0</b><span>donde Chester está más caro</span></button>
+    <button class="tile down" type="button" data-view="cheaper"><b id="t-cheaper" class="num">0</b><span>donde Chester está más barato</span></button>
+    <button class="tile" type="button" data-tab="changes"><b id="t-changes" class="num">0</b><span>cambios de precio en 7 días</span></button>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Secciones">
+    <button class="tab" role="tab" id="tab-prices" aria-controls="panel-prices" aria-selected="true" type="button">Precios</button>
+    <button class="tab" role="tab" id="tab-changes" aria-controls="panel-changes" aria-selected="false" type="button">Cambios</button>
+    <button class="tab" role="tab" id="tab-comps" aria-controls="panel-comps" aria-selected="false" type="button">Competidores</button>
+    <a href="acerca.html">Cómo funciona</a>
+  </nav>
+
+  <section id="panel-prices" role="tabpanel" aria-labelledby="tab-prices" style="display:flex;flex-direction:column;gap:14px">
+    <div class="filters">
+      <div class="field grow"><label for="q">Buscar producto</label><input id="q" type="search" placeholder="Ej.: Royal Canin Mini, Simparica, Old Prince"></div>
+      <div class="field"><label for="f-cat">Marca</label><select id="f-cat"><option value="">Todas</option></select></div>
+      <div class="field"><label for="f-comp">Competidor</label><select id="f-comp"><option value="">Todos</option></select></div>
+      <div class="field"><label for="f-view">Mostrar</label>
+        <select id="f-view">
+          <option value="compared">Con precio para comparar</option>
+          <option value="pricier">Chester más caro</option>
+          <option value="cheaper">Chester más barato</option>
+          <option value="similar">Precio parecido (±3%)</option>
+          <option value="none">Sin comparación</option>
+          <option value="all">Todos los productos</option>
+        </select>
+      </div>
+      <div class="field"><label for="f-sort">Ordenar por</label>
+        <select id="f-sort">
+          <option value="diff-desc">Chester más caro primero</option>
+          <option value="diff-asc">Chester más barato primero</option>
+          <option value="name">Nombre</option>
+          <option value="offers">Más competidores</option>
+        </select>
+      </div>
+    </div>
+    <p id="price-count" class="count" style="margin:0"></p>
+    <div class="table-wrap">
+      <table class="prices">
+        <thead><tr><th>Producto de Chester</th><th class="r">Precio Chester</th><th class="r">Mejor precio competencia</th><th class="r">Diferencia</th><th class="r">Competidores</th></tr></thead>
+        <tbody id="price-rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="panel-changes" role="tabpanel" aria-labelledby="tab-changes" hidden style="flex-direction:column;gap:14px">
+    <div class="filters">
+      <div class="field"><label for="c-comp">Competidor</label><select id="c-comp"><option value="">Todos</option></select></div>
+      <div class="field"><label for="c-days">Período</label>
+        <select id="c-days"><option value="7">Últimos 7 días</option><option value="30" selected>Últimos 30 días</option><option value="90">Últimos 90 días</option></select>
+      </div>
+    </div>
+    <ul id="change-list" class="changes"></ul>
+  </section>
+
+  <section id="panel-comps" role="tabpanel" aria-labelledby="tab-comps" hidden>
+    <div id="comp-cards" class="comps"></div>
+  </section>
+
+  <footer>Los precios de Chester salen del inventario cargado en el monitor. Una oferta marcada como "otro tamaño" o "precio por kg" se muestra pero no cuenta para la comparación.</footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const DATA_URL = new URLSearchParams(location.search).get("data")
+    || "https://raw.githubusercontent.com/jmoreno714/chester-monitor-web/data/data.enc.json";
+  const REMEMBER_KEY = "chester-monitor-password";
+  const TOLERANCE = 3;          // % de diferencia que se considera "parecido"
+  const STALE_OFFER_DAYS = 2;   // ofertas mas viejas se marcan
+
+  const $ = (id) => document.getElementById(id);
+  const money = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
+  const fmtMoney = (n) => (n == null ? "—" : money.format(n));
+  const fmtPct = (n) => (n > 0 ? "+" : n < 0 ? "−" : "") + Math.abs(n).toLocaleString("es-AR", { maximumFractionDigits: 1 }) + "%";
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const toDate = (s) => (s ? new Date(s.length <= 16 ? s + ":00" : s) : null);
+  const fmtDate = (s) => {
+    const d = toDate(s);
+    return d ? d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" }) + " " + d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }) : "—";
+  };
+  const daysAgo = (s) => { const d = toDate(s); return d ? (Date.now() - d.getTime()) / 864e5 : Infinity; };
+  const fmtKg = (kg) => (kg < 1 ? Math.round(kg * 1000) + " g" : kg.toLocaleString("es-AR") + " kg");
+
+  function store(fn) { try { return fn(); } catch { return null; } }
+
+  // ─── Descifrado (mismos parametros que dashboard.py) ──────────────────────
+  const b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  async function decrypt(payload, password) {
+    const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
+    const key = await crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt: b64(payload.salt), iterations: payload.iter, hash: "SHA-256" },
+      base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+    const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(payload.iv) }, key, b64(payload.ct));
+    const stream = new Blob([plain]).stream().pipeThrough(new DecompressionStream("gzip"));
+    return JSON.parse(await new Response(stream).text());
+  }
+
+  async function fetchPayload() {
+    const sep = DATA_URL.includes("?") ? "&" : "?";
+    const res = await fetch(DATA_URL + sep + "t=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error("fetch " + res.status);
+    return res.json();
+  }
+
+  // ─── Estado ───────────────────────────────────────────────────────────────
+  let data = null;
+  let password = null;
+  const open = new Set();
+
+  async function unlock(pw, remember) {
+    const err = $("lock-error");
+    err.hidden = true;
+    $("unlock").disabled = true;
+    $("unlock").textContent = "Abriendo…";
+    let payload;
+    try {
+      payload = await fetchPayload();
+    } catch {
+      err.textContent = "No se pudieron descargar los datos. Revisá la conexión y probá de nuevo.";
+      err.hidden = false;
+      resetButton();
+      return false;
+    }
+    try {
+      data = await decrypt(payload, pw);
+    } catch {
+      err.textContent = "Contraseña incorrecta. Revisala y probá de nuevo.";
+      err.hidden = false;
+      store(() => localStorage.removeItem(REMEMBER_KEY));
+      resetButton();
+      return false;
+    }
+    password = pw;
+    if (remember) store(() => localStorage.setItem(REMEMBER_KEY, pw));
+    $("lock").hidden = true;
+    $("app").hidden = false;
+    renderAll();
+    resetButton();
+    return true;
+  }
+  function resetButton() { $("unlock").disabled = false; $("unlock").textContent = "Entrar"; }
+
+  // ─── Analisis de precios ──────────────────────────────────────────────────
+  function sameSize(offer, product) {
+    if (offer.bulk) return false;
+    if (offer.kg == null || product.kg == null) return true;
+    return Math.abs(offer.kg - product.kg) <= 0.01 * Math.max(offer.kg, product.kg);
+  }
+  function analyze(p, comp) {
+    const offers = p.o.filter((o) => !comp || o.c === comp);
+    const comparable = offers.filter((o) => sameSize(o, p));
+    const best = comparable.length ? comparable.reduce((a, b) => (b.p < a.p ? b : a)) : null;
+    const diff = best && p.p ? ((p.p - best.p) / best.p) * 100 : null;
+    let state = "none";
+    if (diff != null) state = diff >= TOLERANCE ? "pricier" : diff <= -TOLERANCE ? "cheaper" : "similar";
+    return { offers, comparable, best, diff, state };
+  }
+
+  // ─── Render ───────────────────────────────────────────────────────────────
+  function renderAll() {
+    renderHeader();
+    fillSelects();
+    renderSummary();
+    renderPrices();
+    renderChanges();
+    renderCompetitors();
+  }
+
+  function renderHeader() {
+    const hours = (Date.now() - toDate(data.generated_at)) / 36e5;
+    const stale = hours > data.interval_hours * 2 + 1;
+    $("updated").textContent = "Actualizado " + fmtDate(data.generated_at);
+    $("dot").classList.toggle("stale", stale);
+    $("stale").hidden = !stale;
+    if (stale) {
+      $("stale").textContent = `La última revisión fue hace ${Math.round(hours)} horas. El monitor revisa cada ${data.interval_hours} horas: puede que la computadora donde corre esté apagada.`;
+    }
+  }
+
+  function fillSelects() {
+    const cats = [...new Set(data.products.map((p) => p.cat))].sort((a, b) => a.localeCompare(b, "es"));
+    const comps = data.competitors.map((c) => c.name);
+    const fill = (sel, values) => {
+      const keep = sel.value;
+      sel.length = 1;
+      values.forEach((v) => sel.add(new Option(v, v)));
+      sel.value = values.includes(keep) ? keep : "";
+    };
+    fill($("f-cat"), cats);
+    fill($("f-comp"), comps);
+    fill($("c-comp"), comps);
+  }
+
+  function renderSummary() {
+    const all = data.products.map((p) => analyze(p, ""));
+    $("t-compared").textContent = all.filter((a) => a.best).length;
+    $("t-pricier").textContent = all.filter((a) => a.state === "pricier").length;
+    $("t-cheaper").textContent = all.filter((a) => a.state === "cheaper").length;
+    $("t-changes").textContent = data.changes.filter((c) => daysAgo(c.t) <= 7).length;
+  }
+
+  function diffPill(diff, state) {
+    if (diff == null) return '<span class="muted">—</span>';
+    const cls = state === "pricier" ? "up" : state === "cheaper" ? "down" : "flat";
+    const label = state === "pricier" ? "más caro" : state === "cheaper" ? "más barato" : "parecido";
+    return `<span class="pill ${cls}" title="Chester ${label}">${fmtPct(diff)}</span>`;
+  }
+
+  function renderPrices() {
+    const q = $("q").value.trim().toLowerCase();
+    const cat = $("f-cat").value;
+    const comp = $("f-comp").value;
+    const view = $("f-view").value;
+    const sort = $("f-sort").value;
+
+    let rows = data.products.map((p) => ({ p, a: analyze(p, comp) }));
+    rows = rows.filter(({ p, a }) => {
+      if (cat && p.cat !== cat) return false;
+      if (q && !(p.n + " " + p.cat).toLowerCase().includes(q)) return false;
+      if (comp && !a.offers.length) return false;
+      if (view === "all") return true;
+      if (view === "compared") return !!a.best;
+      return a.state === view;
+    });
+    const byDiff = (dir) => (x, y) => (x.a.diff == null) - (y.a.diff == null) || dir * ((y.a.diff ?? 0) - (x.a.diff ?? 0));
+    const sorters = {
+      "diff-desc": byDiff(1),
+      "diff-asc": byDiff(-1),
+      name: (x, y) => x.p.n.localeCompare(y.p.n, "es"),
+      offers: (x, y) => y.a.offers.length - x.a.offers.length || x.p.n.localeCompare(y.p.n, "es"),
+    };
+    rows.sort(sorters[sort]);
+
+    $("price-count").textContent = `${rows.length} de ${data.products.length} productos de Chester`;
+    if (!rows.length) {
+      $("price-rows").innerHTML = '<tr><td colspan="5" class="empty">Ningún producto coincide con estos filtros.</td></tr>';
+      return;
+    }
+    $("price-rows").innerHTML = rows.map(({ p, a }) => {
+      const id = p.n;
+      const isOpen = open.has(id);
+      const best = a.best
+        ? `${fmtMoney(a.best.p)}<span class="sub">${esc(a.best.c)}</span>`
+        : a.offers.length ? '<span class="muted">Solo otros tamaños</span>' : '<span class="muted">Sin datos</span>';
+      let html = `<tr class="prod-row${isOpen ? " open" : ""}" data-id="${esc(id)}" tabindex="0" aria-expanded="${isOpen}">
+        <td><span class="pname">${esc(p.n)}</span><span class="sub">${esc(p.cat)}</span></td>
+        <td class="r">${fmtMoney(p.p)}</td>
+        <td class="r">${best}</td>
+        <td class="r">${diffPill(a.diff, a.state)}</td>
+        <td class="r">${a.offers.length}</td></tr>`;
+      if (isOpen) html += `<tr class="detail"><td colspan="5">${offersHtml(p, a)}</td></tr>`;
+      return html;
+    }).join("");
+  }
+
+  function offersHtml(p, a) {
+    if (!a.offers.length) return '<p class="empty" style="margin:0">Ningún competidor vende este producto.</p>';
+    return '<ul class="offers">' + a.offers.map((o) => {
+      const flags = [];
+      if (o.bulk) flags.push('<span class="pill warn">precio por kg</span>');
+      else if (!sameSize(o, p)) flags.push(`<span class="pill warn">otro tamaño: ${fmtKg(o.kg)}</span>`);
+      const age = daysAgo(o.u);
+      if (age > STALE_OFFER_DAYS) flags.push(`<span class="pill warn">precio de hace ${Math.floor(age)} días</span>`);
+      const d = p.p && sameSize(o, p) ? ((p.p - o.p) / o.p) * 100 : null;
+      const st = d == null ? "none" : d >= TOLERANCE ? "pricier" : d <= -TOLERANCE ? "cheaper" : "similar";
+      return `<li class="offer">
+        <span class="comp">${esc(o.c)}</span>
+        <span class="oname">${esc(o.n)}${flags.length ? `<span class="flags">${flags.join("")}</span>` : ""}</span>
+        <span class="num">${fmtMoney(o.p)}</span>
+        <span>${d == null ? "" : diffPill(d, st)}</span>
+      </li>`;
+    }).join("") + "</ul>";
+  }
+
+  function renderChanges() {
+    const comp = $("c-comp").value;
+    const days = Number($("c-days").value);
+    const list = data.changes
+      .filter((c) => (!comp || c.c === comp) && daysAgo(c.t) <= days)
+      .sort((a, b) => (a.t < b.t ? 1 : -1));
+    if (!list.length) {
+      $("change-list").innerHTML = `<li class="empty">No hubo cambios de precio ${comp ? "en " + esc(comp) + " " : ""}en este período.</li>`;
+      return;
+    }
+    $("change-list").innerHTML = list.map((c) => {
+      const pct = c.o ? ((c.p - c.o) / c.o) * 100 : 0;
+      const cls = pct > 0 ? "up" : "down";
+      return `<li class="change">
+        <time datetime="${esc(c.t)}">${fmtDate(c.t)}</time>
+        <span class="what"><b>${esc(c.n)}</b><span class="sub">${esc(c.c)} · Chester: ${esc(c.ch)}</span></span>
+        <span class="price">${fmtMoney(c.o)} → ${fmtMoney(c.p)} <span class="pill ${cls}">${pct > 0 ? "▲" : "▼"} ${fmtPct(Math.abs(pct)).replace("+", "")}</span></span>
+      </li>`;
+    }).join("");
+  }
+
+  function renderCompetitors() {
+    $("comp-cards").innerHTML = data.competitors.map((c) => {
+      const ok = !c.failures;
+      const status = ok
+        ? '<span class="pill down">Funcionando</span>'
+        : `<span class="pill up">Sin datos en ${c.failures} revisión${c.failures > 1 ? "es" : ""}</span>`;
+      const host = c.url ? c.url.replace(/^https?:\/\//, "").replace(/\/.*$/, "") : "";
+      return `<article class="comp-card">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:start;flex-wrap:wrap"><h3>${esc(c.name)}</h3>${status}</div>
+        <dl class="kv">
+          <dt>Última lectura</dt><dd>${fmtDate(c.last_ok)}</dd>
+          <dt>Productos leídos</dt><dd>${c.read ?? "—"}</dd>
+          <dt>Coinciden con Chester</dt><dd>${c.matched ?? "—"}</dd>
+        </dl>
+        ${c.url ? `<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(host)}</a>` : ""}
+      </article>`;
+    }).join("");
+  }
+
+  // ─── Pestanas y eventos ───────────────────────────────────────────────────
+  function showTab(name) {
+    const map = { prices: "panel-prices", changes: "panel-changes", comps: "panel-comps" };
+    for (const [key, panel] of Object.entries(map)) {
+      const on = key === name;
+      $("tab-" + key).setAttribute("aria-selected", on);
+      $(panel).hidden = !on;
+      $(panel).style.display = on ? "flex" : "";
+    }
+  }
+  $("tab-prices").addEventListener("click", () => showTab("prices"));
+  $("tab-changes").addEventListener("click", () => showTab("changes"));
+  $("tab-comps").addEventListener("click", () => showTab("comps"));
+
+  document.querySelectorAll(".tile").forEach((t) => t.addEventListener("click", () => {
+    if (t.dataset.tab) { showTab(t.dataset.tab); $("c-days").value = "7"; renderChanges(); return; }
+    $("f-view").value = t.dataset.view;
+    $("f-sort").value = t.dataset.view === "cheaper" ? "diff-asc" : "diff-desc";
+    showTab("prices");
+    renderPrices();
+  }));
+
+  ["q", "f-cat", "f-comp", "f-view", "f-sort"].forEach((id) => $(id).addEventListener("input", renderPrices));
+  ["c-comp", "c-days"].forEach((id) => $(id).addEventListener("input", renderChanges));
+
+  const toggleRow = (row) => {
+    const id = row.dataset.id;
+    open.has(id) ? open.delete(id) : open.add(id);
+    renderPrices();
+  };
+  $("price-rows").addEventListener("click", (e) => { const row = e.target.closest(".prod-row"); if (row) toggleRow(row); });
+  $("price-rows").addEventListener("keydown", (e) => {
+    const row = e.target.closest(".prod-row");
+    if (row && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggleRow(row); }
+  });
+
+  $("login").addEventListener("submit", (e) => {
+    e.preventDefault();
+    unlock($("pw").value, $("remember").checked);
+  });
+  $("logout").addEventListener("click", () => {
+    store(() => localStorage.removeItem(REMEMBER_KEY));
+    data = null; password = null; open.clear();
+    $("pw").value = "";
+    $("app").hidden = true;
+    $("lock").hidden = false;
+  });
+  $("reload").addEventListener("click", async () => {
+    $("reload").disabled = true;
+    try { data = await decrypt(await fetchPayload(), password); renderAll(); }
+    catch { alertStale("No se pudieron actualizar los datos. Probá de nuevo en un rato."); }
+    $("reload").disabled = false;
+  });
+  function alertStale(msg) { $("stale").textContent = msg; $("stale").hidden = false; }
+
+  const saved = store(() => localStorage.getItem(REMEMBER_KEY));
+  if (saved) { $("remember").checked = true; unlock(saved, true); }
+})();
+</script>
+</body>
+</html>
