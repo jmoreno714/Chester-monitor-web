@@ -182,12 +182,45 @@
   .kv dt { color: var(--muted); }
   .kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
 
+  /* Editor de producto */
+  .editor { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, 1fr); gap: 12px 16px;
+            padding: 16px 14px 16px 30px; background: var(--surface); border-bottom: 1px solid var(--line); }
+  .editor .field { min-width: 0; }
+  .editor input, .editor select { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--surface-2); width: 100%; }
+  .editor .wide { grid-column: 1 / -1; }
+  .editor .hint { font-size: .82rem; color: var(--muted); margin: 0; }
+  .editor .linkish { border: 0; background: none; padding: 0; color: var(--accent); cursor: pointer; text-decoration: underline; font-size: .82rem; }
+  .editor h4 { grid-column: 1 / -1; margin: 0; font-family: var(--mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  .edit-actions { grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .edit-status { font-size: .92rem; }
+  .edit-status.ok { color: var(--down); }
+  .edit-status.error { color: var(--up); }
+  .edit-note { margin: 0; padding: 12px 14px 12px 30px; color: var(--muted); font-size: .92rem; background: var(--surface); border-bottom: 1px solid var(--line); }
+  .offers-title { margin: 0; padding: 12px 14px 0 30px; font-family: var(--mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+
   footer { color: var(--muted); font-size: .88rem; border-top: 1px solid var(--line); padding-top: 16px; }
 
   @media (max-width: 760px) {
     body { padding-inline: 16px; }
     .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .offer { grid-template-columns: minmax(0, 1fr) auto; }
+    .editor { grid-template-columns: minmax(0, 1fr); padding-left: 14px; }
+    /* En el celular, cada producto es una tarjeta en vez de una fila de tabla */
+    .prices { min-width: 0; display: block; }
+    .prices thead { display: none; }
+    .prices tbody { display: block; }
+    .prices tr.prod-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+    .prices tr.prod-row td { display: block; border: 0; padding: 0; text-align: left; white-space: normal; background: none; }
+    .prices tr.prod-row td:nth-child(1) { grid-column: 1 / -1; }
+    .prices tr.prod-row td:nth-child(6) { display: none; }
+    .prices tr.prod-row td:nth-child(2)::before { content: "Tarjeta"; }
+    .prices tr.prod-row td:nth-child(3)::before { content: "Transferencia"; }
+    .prices tr.prod-row td:nth-child(4)::before { content: "Mejor competencia"; }
+    .prices tr.prod-row td:nth-child(5)::before { content: "Diferencia"; }
+    .prices tr.prod-row td:not(:first-child)::before { display: block; font-family: var(--mono); font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+    .prices tr.detail, .prices tr.detail td { display: block; }
+    .prices tr:has(td.empty), .prices td.empty { display: block; }
+    .offers, .offers-title { padding-left: 14px; }
     .offer .oname { grid-column: 1 / -1; grid-row: 2; }
     .change { grid-template-columns: minmax(0, 1fr) auto; }
     .change time { grid-column: 1 / -1; }
@@ -250,12 +283,12 @@
       <div class="field"><label for="f-comp">Competidor</label><select id="f-comp"><option value="">Todos</option></select></div>
       <div class="field"><label for="f-view">Mostrar</label>
         <select id="f-view">
+          <option value="all" selected>Todos los productos</option>
           <option value="compared">Con precio para comparar</option>
           <option value="pricier">Chester más caro</option>
           <option value="cheaper">Chester más barato</option>
           <option value="similar">Precio parecido (±3%)</option>
           <option value="none">Sin comparación</option>
-          <option value="all">Todos los productos</option>
         </select>
       </div>
       <div class="field"><label for="f-sort">Ordenar por</label>
@@ -270,7 +303,7 @@
     <p id="price-count" class="count" style="margin:0"></p>
     <div class="table-wrap">
       <table class="prices">
-        <thead><tr><th>Producto de Chester</th><th class="r">Precio Chester</th><th class="r">Mejor precio competencia</th><th class="r">Diferencia</th><th class="r">Competidores</th></tr></thead>
+        <thead><tr><th>Producto de Chester</th><th class="r">Tarjeta</th><th class="r">Transferencia</th><th class="r">Mejor precio competencia</th><th class="r">Diferencia</th><th class="r">Competidores</th></tr></thead>
         <tbody id="price-rows"></tbody>
       </table>
     </div>
@@ -290,7 +323,7 @@
     <div id="comp-cards" class="comps"></div>
   </section>
 
-  <footer>Los precios de Chester salen del inventario cargado en el monitor. Una oferta marcada como "otro tamaño", "tamaño no indicado" o "precio por kg" se muestra pero no cuenta para la comparación.</footer>
+  <footer>Los productos y precios de Chester salen de la planilla CHESTER DATA y se actualizan en cada revisión. Lo que se edita acá se guarda en la planilla. Una oferta marcada como "otro tamaño", "tamaño no indicado" o "precio por kg" se muestra pero no cuenta para la comparación.</footer>
 </div>
 
 <script>
@@ -365,6 +398,7 @@
       return false;
     }
     password = pw;
+    applyEdits();
     if (remember) store(() => localStorage.setItem(REMEMBER_KEY, pw));
     $("lock").hidden = true;
     $("app").hidden = false;
@@ -471,11 +505,11 @@
 
     $("price-count").textContent = `${rows.length} de ${data.products.length} productos de Chester`;
     if (!rows.length) {
-      $("price-rows").innerHTML = '<tr><td colspan="5" class="empty">Ningún producto coincide con estos filtros.</td></tr>';
+      $("price-rows").innerHTML = '<tr><td colspan="6" class="empty">Ningún producto coincide con estos filtros.</td></tr>';
       return;
     }
     $("price-rows").innerHTML = rows.map(({ p, a }) => {
-      const id = p.n;
+      const id = p.id;
       const isOpen = open.has(id);
       const best = a.best
         ? `${fmtMoney(a.best.p)}<span class="sub">${esc(a.best.c)}</span>`
@@ -483,12 +517,111 @@
       let html = `<tr class="prod-row${isOpen ? " open" : ""}" data-id="${esc(id)}" tabindex="0" aria-expanded="${isOpen}">
         <td><span class="pname">${esc(p.n)}</span><span class="sub">${esc(p.cat)}</span></td>
         <td class="r">${fmtMoney(p.p)}</td>
+        <td class="r">${fmtMoney(p.px)}</td>
         <td class="r">${best}</td>
         <td class="r">${diffPill(a.diff, a.state)}</td>
         <td class="r">${a.offers.length}</td></tr>`;
-      if (isOpen) html += `<tr class="detail"><td colspan="5">${offersHtml(p, a)}</td></tr>`;
+      if (isOpen) html += `<tr class="detail"><td colspan="6">${editorHtml(p)}<p class="offers-title">Competencia</p>${offersHtml(p, a)}</td></tr>`;
       return html;
     }).join("");
+  }
+
+  // ─── Edición de productos (se guarda en la planilla de Google) ────────────
+  const EDITS_KEY = "chester-monitor-edits";
+  const localStamp = (d = new Date()) => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+  const slug = (s) => String(s).replace(/[^a-zA-Z0-9]+/g, "-");
+
+  // Un cambio guardado se ve enseguida en este dispositivo, aunque el tablero
+  // se republique recién en la próxima revisión del monitor (hasta 4 horas).
+  function loadEdits() { return store(() => JSON.parse(localStorage.getItem(EDITS_KEY) || "{}")) || {}; }
+  function rememberEdit(p) {
+    const edits = loadEdits();
+    edits[p.id] = { n: p.n, cat: p.cat, sp: p.sp, p: p.p, px: p.px, row: p.row, at: localStamp() };
+    store(() => localStorage.setItem(EDITS_KEY, JSON.stringify(edits)));
+  }
+  function applyEdits() {
+    const edits = loadEdits();
+    const runStart = toDate(data.generated_at).getTime() - 15 * 6e4;
+    for (const [id, ed] of Object.entries(edits)) {
+      if (toDate(ed.at).getTime() < runStart) { delete edits[id]; continue; } // el tablero ya lo incluye
+      const p = data.products.find((x) => x.id === id);
+      if (p) Object.assign(p, { n: ed.n, cat: ed.cat, sp: ed.sp, p: ed.p, px: ed.px, row: ed.row });
+    }
+    store(() => localStorage.setItem(EDITS_KEY, JSON.stringify(edits)));
+  }
+
+  function optionsHtml(list, current, emptyLabel) {
+    const values = !current || list.includes(current) ? list : [current, ...list];
+    return (emptyLabel != null ? `<option value="">${esc(emptyLabel)}</option>` : "")
+      + values.map((v) => `<option value="${esc(v)}"${v === current ? " selected" : ""}>${esc(v)}</option>`).join("");
+  }
+
+  function editorHtml(p) {
+    if (!data.edit_url || !p.tab) {
+      return '<p class="edit-note">La edición desde el tablero todavía no está activada.</p>';
+    }
+    const k = slug(p.id);
+    const opts = data.options || { categories: [], species: [] };
+    const formula = p.p && p.px && Math.abs(p.px - Math.round(p.p * 0.9 * 100) / 100) < 1;
+    const species = p.sp == null
+      ? `<div class="field"><label>Perro o gato</label><p class="hint">Esta pestaña de la planilla no tiene esa columna.</p></div>`
+      : `<div class="field"><label for="e-${k}-sp">Perro o gato</label><select id="e-${k}-sp" name="especie">${optionsHtml(opts.species, p.sp, null)}</select></div>`;
+    return `<form class="editor" data-id="${esc(p.id)}" novalidate>
+      <h4>Editar en la planilla</h4>
+      <div class="field wide"><label for="e-${k}-n">Nombre del producto</label><input id="e-${k}-n" name="nombre" type="text" value="${esc(p.n)}" maxlength="200" required></div>
+      <div class="field"><label for="e-${k}-cat">Categoría</label><select id="e-${k}-cat" name="categoria">${optionsHtml(opts.categories, p.cat, "(sin categoría)")}</select></div>
+      ${species}
+      <div class="field"></div>
+      <div class="field"><label for="e-${k}-p">Precio con tarjeta</label><input id="e-${k}-p" name="tarjeta" type="number" min="1" step="1" inputmode="numeric" value="${p.p ?? ""}"></div>
+      <div class="field"><label for="e-${k}-px">Precio por transferencia</label><input id="e-${k}-px" name="transferencia" type="number" min="1" step="1" inputmode="numeric" value="${p.px ?? ""}"></div>
+      <div class="field">
+        <p class="hint">${formula
+          ? "Se calcula solo: 10% menos que tarjeta. Si lo cambiás a mano, queda fijo."
+          : "Está fijo a mano, no es 10% menos que tarjeta."}</p>
+        ${formula ? "" : '<button class="linkish" type="button" data-action="restore">Volver a 10% menos que tarjeta</button>'}
+      </div>
+      <div class="edit-actions">
+        <button class="btn primary" type="submit">Guardar en la planilla</button>
+        <span class="edit-status" role="status"></span>
+      </div>
+    </form>`;
+  }
+
+  function setStatus(form, text, kind) {
+    const el = form.querySelector(".edit-status");
+    el.textContent = text;
+    el.className = "edit-status" + (kind ? " " + kind : "");
+  }
+
+  async function saveProduct(form, changes) {
+    const p = data.products.find((x) => x.id === form.dataset.id);
+    if (!p) return;
+    const buttons = form.querySelectorAll("button");
+    buttons.forEach((b) => (b.disabled = true));
+    setStatus(form, "Guardando en la planilla…");
+    try {
+      const res = await fetch(data.edit_url, {
+        method: "POST",
+        body: JSON.stringify({ auth: password, tab: p.tab, row: p.row, expected_name: p.n, changes }),
+      });
+      const out = await res.json();
+      if (!out.ok) throw new Error(out.error || "No se pudo guardar.");
+      Object.assign(p, {
+        n: out.product.n, cat: out.product.cat, sp: p.sp == null ? null : out.product.sp,
+        p: out.product.p, px: out.product.px, row: out.row,
+      });
+      rememberEdit(p);
+      open.add(p.id);
+      fillSelects();
+      renderSummary();
+      renderPrices();
+      const again = document.querySelector(`form.editor[data-id="${CSS.escape(p.id)}"]`);
+      if (again) setStatus(again, "Guardado en la planilla.", "ok");
+    } catch (err) {
+      const msg = err instanceof TypeError ? "No se pudo conectar con la planilla. Revisá la conexión y probá de nuevo." : err.message;
+      setStatus(form, msg, "error");
+      buttons.forEach((b) => (b.disabled = false));
+    }
   }
 
   function offersHtml(p, a) {
@@ -582,7 +715,35 @@
     open.has(id) ? open.delete(id) : open.add(id);
     renderPrices();
   };
-  $("price-rows").addEventListener("click", (e) => { const row = e.target.closest(".prod-row"); if (row) toggleRow(row); });
+  $("price-rows").addEventListener("click", (e) => {
+    const restore = e.target.closest('[data-action="restore"]');
+    if (restore) { saveProduct(restore.closest("form.editor"), { restore_transfer_formula: true }); return; }
+    const row = e.target.closest(".prod-row");
+    if (row) toggleRow(row);
+  });
+  $("price-rows").addEventListener("submit", (e) => {
+    const form = e.target.closest("form.editor");
+    if (!form) return;
+    e.preventDefault();
+    const p = data.products.find((x) => x.id === form.dataset.id);
+    const f = form.elements;
+    const changes = {};
+    const name = f.namedItem("nombre").value.trim();
+    if (!name) { setStatus(form, "El nombre no puede quedar vacío.", "error"); return; }
+    if (name !== p.n) changes.name = name;
+    if (f.namedItem("categoria").value !== (p.cat || "")) changes.category = f.namedItem("categoria").value;
+    const sp = f.namedItem("especie");
+    if (sp && sp.value !== (p.sp || "")) changes.species = sp.value;
+    const price = Number(f.namedItem("tarjeta").value);
+    if (!(price > 0)) { setStatus(form, "El precio con tarjeta tiene que ser mayor a cero.", "error"); return; }
+    if (price !== p.p) changes.price = price;
+    const pxRaw = f.namedItem("transferencia").value;
+    const px = Number(pxRaw);
+    if (pxRaw !== "" && !(px > 0)) { setStatus(form, "El precio por transferencia tiene que ser mayor a cero.", "error"); return; }
+    if (pxRaw !== "" && px !== p.px) changes.price_transfer = px;
+    if (!Object.keys(changes).length) { setStatus(form, "No hay cambios para guardar."); return; }
+    saveProduct(form, changes);
+  });
   $("price-rows").addEventListener("keydown", (e) => {
     const row = e.target.closest(".prod-row");
     if (row && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggleRow(row); }
@@ -601,7 +762,7 @@
   });
   $("reload").addEventListener("click", async () => {
     $("reload").disabled = true;
-    try { data = await decrypt(await fetchPayload(), password); renderAll(); }
+    try { data = await decrypt(await fetchPayload(), password); applyEdits(); renderAll(); }
     catch { alertStale("No se pudieron actualizar los datos. Probá de nuevo en un rato."); }
     $("reload").disabled = false;
   });
